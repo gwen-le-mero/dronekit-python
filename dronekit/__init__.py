@@ -2760,7 +2760,8 @@ def connect(ip,
             baud=115200,
             heartbeat_timeout=30,
             source_system=255,
-            use_native=False):
+            use_native=False,
+            signing_passphrase=None):
     """
     Returns a :py:class:`Vehicle` object connected to the address specified by string parameter ``ip``.
     Connection string parameters (``ip``) for different targets are listed in the :ref:`getting started guide <get_started_connecting>`.
@@ -2816,6 +2817,13 @@ def connect(ip,
         vehicle_class = Vehicle
 
     handler = MAVConnection(ip, baud=baud, source_system=source_system, use_native=use_native)
+    if signing_passphrase is not None and float(handler.master.WIRE_PROTOCOL_VERSION) >= 2.0:
+        import hashlib
+        h = hashlib.new('sha256')
+        h.update(signing_passphrase)
+        handler.master.setup_signing(h.digest())
+
+
     vehicle = vehicle_class(handler)
 
     if status_printer:
